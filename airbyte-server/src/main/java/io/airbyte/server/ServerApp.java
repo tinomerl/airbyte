@@ -75,6 +75,7 @@ public class ServerApp implements ServerRunnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerApp.class);
   private static final int PORT = 8001;
+  private static final AirbyteVersion VERSION_BREAK = null;
   /**
    * We can't support automatic migration for kube before this version because we had a bug in kube
    * which would cause airbyte db to erase state upon termination, as a result the automatic migration
@@ -235,6 +236,20 @@ public class ServerApp implements ServerRunnable {
         specFetcher,
         jobPersistence,
         configs);
+
+
+    if(airbyteDatabaseVersion.isPresent()
+        && new AirbyteVersion(airbyteDatabaseVersion.get()).lessThan(VERSION_BREAK)
+        && new AirbyteVersion(airbyteVersion).greaterThan(VERSION_BREAK)) {
+      final String message = String.format("Cannot upgrade from version %s to version %s directly. First you must upgrade to version %s. After that upgrade is complete, you may upgrade to version %s",
+          airbyteDatabaseVersion.get(),
+          airbyteVersion,
+          VERSION_BREAK,
+          airbyteVersion);
+
+      LOGGER.error(message);
+      throw new RuntimeException(message);
+    }
 
     if (airbyteDatabaseVersion.isPresent() && AirbyteVersion.isCompatible(airbyteVersion, airbyteDatabaseVersion.get())) {
       LOGGER.info("Starting server...");
