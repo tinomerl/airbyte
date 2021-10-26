@@ -67,4 +67,5 @@ public final class DebeziumConverterUtils {
         input.getClass().getName());
     return input.toString();
   }
+
 }
