@@ -6,7 +6,6 @@ package io.airbyte.integrations.debezium.internals;
 
 import io.airbyte.db.DataTypeUtils;
 import io.debezium.spi.converter.RelationalColumn;
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -23,16 +22,15 @@ public final class DebeziumConverterUtils {
     throw new UnsupportedOperationException();
   }
 
-  public static Object convertDefaultValue(final RelationalColumn field) {
-    if (field.isOptional()) {
-      return null;
-    } else if (field.hasDefaultValue()) {
-      return field.defaultValue();
-    }
-    return null;
-  }
-
-  public static Object convertDate(final Object input) {
+  public static String convertDate(final Object input) {
+    /**
+     * While building this custom converter we were not sure what type debezium could return cause there
+     * is no mention of it in the documentation. Secondly if you take a look at
+     * {@link io.debezium.connector.mysql.converters.TinyIntOneToBooleanConverter#converterFor(io.debezium.spi.converter.RelationalColumn, io.debezium.spi.converter.CustomConverter.ConverterRegistration)}
+     * method, even it is handling multiple data types but its not clear under what circumstances which
+     * data type would be returned. I just went ahead and handled the data types that made sense.
+     * Secondly, we use LocalDateTime to handle this cause it represents DATETIME datatype in JAVA
+     */
     if (input instanceof LocalDateTime) {
       return DataTypeUtils.toISO8601String((LocalDateTime) input);
     } else if (input instanceof LocalDate) {
@@ -52,20 +50,17 @@ public final class DebeziumConverterUtils {
         return input.toString();
       }
     }
-    LOGGER.warn("Uncovered date class type '{}'. Use default converter",
-        input.getClass().getName());
+    LOGGER.warn("Uncovered date class type '{}'. Use default converter", input.getClass().getName());
     return input.toString();
-
   }
 
-  public static Object convertMoney(final Object input) {
-    if (input instanceof BigDecimal) {
-      return ((BigDecimal) input).doubleValue();
+  public static Object convertDefaultValue(RelationalColumn field) {
+    if (field.isOptional()) {
+      return null;
+    } else if (field.hasDefaultValue()) {
+      return field.defaultValue();
     }
-
-    LOGGER.warn("Uncovered date class type '{}'. Use default converter",
-        input.getClass().getName());
-    return input.toString();
+    return null;
   }
 
 }
