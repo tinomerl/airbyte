@@ -5,14 +5,12 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Iterable, List, Mapping, MutableMapping, Optional, Union
+from urllib.parse import parse_qs, urlparse
 
 import pendulum
 import requests
-from urllib.parse import urlparse
-from urllib.parse import parse_qs
-
-
 from airbyte_cdk.sources.streams.http import HttpStream
+
 
 class Stream(HttpStream, ABC):
     url_base = "https://www.zopim.com/api/v2/"
@@ -32,11 +30,11 @@ class Stream(HttpStream, ABC):
 
     def next_page_token(self, response: requests.Response) -> Optional[Mapping[str, Any]]:
         response_data = response.json()
-        
+
         if "next_url" in response_data:
             next_url = response_data["next_url"]
-            cursor = parse_qs(urlparse(next_url).query)['cursor']     
-            return { "cursor": cursor }
+            cursor = parse_qs(urlparse(next_url).query)["cursor"]
+            return {"cursor": cursor}
 
     def request_params(
         self, stream_state: Mapping[str, Any], next_page_token: Mapping[str, Any] = None, **kwargs
@@ -250,7 +248,6 @@ class RoutingSettings(Stream):
     name = "routing_settings"
     data_field = "data"
 
-    
     def path(
         self,
         stream_state: Mapping[str, Any] = None,
