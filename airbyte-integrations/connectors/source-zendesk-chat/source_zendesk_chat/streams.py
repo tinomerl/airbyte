@@ -103,8 +103,9 @@ class TimeIncrementalStream(BaseIncrementalStream, ABC):
     def get_updated_state(self, current_stream_state: MutableMapping[str, Any], latest_record: Mapping[str, Any]) -> Mapping[str, Any]:
         latest_benchmark = self._field_to_datetime(latest_record[self.cursor_field])
         if current_stream_state.get(self.cursor_field):
-            return {self.cursor_field: str(max(latest_benchmark, self._field_to_datetime(current_stream_state[self.cursor_field])))}
-        return {self.cursor_field: str(latest_benchmark)}
+            state = max(latest_benchmark, self._field_to_datetime(current_stream_state[self.cursor_field]))
+            return {self.cursor_field: state.strftime("%Y-%m-%dT%H:%M:%SZ")}
+        return {self.cursor_field: latest_benchmark.strftime("%Y-%m-%dT%H:%M:%SZ")}
 
     def request_params(
         self, stream_state: Mapping[str, Any], next_page_token: Mapping[str, Any] = None, **kwargs
