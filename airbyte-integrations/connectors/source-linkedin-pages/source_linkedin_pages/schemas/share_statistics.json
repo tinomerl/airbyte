@@ -32,7 +32,14 @@
         },
         "shareMentionsCount": {
           "type": ["null", "integer"]
+        },
+        "start": {
+          "type": ["null", "integer"]
+        },
+        "end": {
+          "type": ["null", "integer"]
         }
+      }
       }
     },
     "organizationalEntity": { "type": ["null", "string"] }
