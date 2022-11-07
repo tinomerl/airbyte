@@ -14,6 +14,12 @@
         "description": "Specify the Organization ID",
         "examples": ["123456789"]
       },
+      "start_date" :{
+        "title": "Start Date",
+        "type": "string",
+        "description": "Date in the format of YYYY-MM-DD",
+        "examples": ["2022-11-01"]
+      },
       "credentials": {
         "title": "Authentication",
         "type": "object",
