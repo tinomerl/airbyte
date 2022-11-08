@@ -40,7 +40,6 @@
           "type": ["null", "integer"]
         }
       }
-      }
     },
     "organizationalEntity": { "type": ["null", "string"] }
   }

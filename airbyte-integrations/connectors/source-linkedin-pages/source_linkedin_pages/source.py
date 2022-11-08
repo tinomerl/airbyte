@@ -40,6 +40,13 @@ class LinkedinPagesStream(HttpStream, ABC):
         content = response.json()
         paging = content.get("paging")
         if paging and paging.get("links"):
+            # The LinkedIn API returns a list for pagination. Inside there are one or two elements
+            # which contain the complete Links for the previos page or the next one. To check
+            # if a new page will be present the list comprehension checks if the key `rel` with
+            # the value `next` will be present. If so a next page Token is calculated
+            next_available = [True for link in paging["links"] if link["rel"] == "next"]
+            if not next_available:
+                return None
             offset = paging["start"] + paging["count"]
             return {"start": offset, "count": paging["count"]}
         return None
@@ -86,10 +93,12 @@ class LinkedinPagesIncremental(LinkedinPagesStream, IncrementalMixin):
     def request_params(self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None) -> MutableMapping[str, Any]:
         params = super().request_params(stream_state, stream_slice, next_page_token)
         if self.state:
+            start_date = pendulum.from_format(self.state[self.cursor_field], "YYYY-MM-DD").int_timestamp * 1000
+            end_date = int(datetime.now().timestamp() * 1000)
             params.update({
                 "timeIntervals.timeGranularityType": "DAY",
-                "timeIntervals.timeRange.start": pendulum.from_format(self.state[self.cursor_field], "YYYY-MM-DD").int_timestamp * 1000,
-                "timeIntervals.timeRange.end": datetime.now().timestamp() * 1000
+                "timeIntervals.timeRange.start": start_date,
+                "timeIntervals.timeRange.end": end_date
             })
         return params
 
@@ -121,10 +130,18 @@ class OrganizationLookup(LinkedinPagesStream):
 
 
 class FollowerStatistics(LinkedinPagesIncremental):
-    def path(self, stream_state: Mapping[str, Any], **kwargs) -> MutableMapping[str, Any]:
 
-        path = f"organizationalEntityFollowerStatistics?q=organizationalEntity&organizationalEntity=urn:li:organization:{self.org}"
+    def path(self, stream_state: Mapping[str, Any], **kwargs) -> MutableMapping[str, Any]:
+        path = "organizationalEntityFollowerStatistics"
         return path
+    
+    def request_params(self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None) -> MutableMapping[str, Any]:
+        params = super().request_params(stream_state, stream_slice, next_page_token)
+        params.update({
+            "q": "organizationalEntity",
+            "organizationalEntity": f"urn:li:organization:{self.org}"
+        })
+        return params
 
     def parse_response(
         self, response: requests.Response, stream_state: Mapping[str, Any] = None, stream_slice: Mapping[str, Any] = None
@@ -141,10 +158,10 @@ class ShareStatistics(LinkedinPagesIncremental):
         return path
 
     def request_params(self, stream_state: Mapping[str, Any], stream_slice: Mapping[str, Any] = None, next_page_token: Mapping[str, Any] = None) -> MutableMapping[str, Any]:
-        params = super().request_params(stream_state, stream_slice, next_page_token)
+        params = super().request_params(stream_state, stream_slice, next_page_token) 
         params.update({
             "q": "organizationalEntity",
-            "organizationalEntity": f"urn%3Ali%3Aorganization%3A{self.org}"
+            "organizationalEntity": f"urn:li:organization:{self.org}"
         })
         return params
 

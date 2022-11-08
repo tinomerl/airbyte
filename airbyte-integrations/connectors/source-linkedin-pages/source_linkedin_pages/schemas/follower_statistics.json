@@ -26,6 +26,23 @@
       "items": {
         "type": ["null", "object"]
       }
+    },
+    "followerGains": {
+      "type": ["null", "object"],
+      "properties": {
+        "organicFollowerGain": {
+          "type": ["null", "integer"]
+        },
+        "paidFollowerGain": {
+          "type": ["null", "integer"]
+        }
+      }
+    },
+    "start": {
+      "type": ["null", "integer"]
+    },
+    "end": {
+      "type": ["null", "integer"]
     }
   }
 }
